@@ -23,4 +23,4 @@ git clone --recurse-submodules [https://github.com/jasonnan2/NEATLabs_EEGprocess
 ## Documentation & Usage
 For detailed guides, workflow documentation, and usage instructions, please refer to the project wiki:
 
- **[Automated Analysis of EEG Wiki](https://github.com/jasonnan2/NEATLabs_EEGprocessing/wiki)**
+ **[Automated Analysis of EEG Wiki](https://github.com/jasonnan2/Automated-Analysis-of-EEG/wiki)**
