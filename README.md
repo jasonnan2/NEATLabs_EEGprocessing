@@ -11,7 +11,7 @@ Follow this script **[brainEpreprocessing.m](https://github.com/jasonnan2/NEATLa
 ---
 ## Step 2: Organizing and Formatting Data
 
-Follow the Workflow in **[brainEanalysis](https://github.com/jasonnan2/NEATLabs_EEGprocessing/brainEanalysis)**
+Follow the Workflow in **[brainEanalysis](https://github.com/jasonnan2/NEATLabs_EEGprocessing/tree/main/brainEanalysis)**
 
 ---
 ## Step 3: Statistical Analysis
