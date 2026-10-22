@@ -1,4 +1,4 @@
-[submodule "plugins/Automated-Analysis-of-EEG"]
+[submodule "Automated-Analysis-of-EEG"]
 	path = Automated-Analysis-of-EEG
 	url = https://github.com/jasonnan2/Automated-Analysis-of-EEG
 [submodule "eeglab/dsi"]
