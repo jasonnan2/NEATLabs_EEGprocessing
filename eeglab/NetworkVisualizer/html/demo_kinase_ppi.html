@@ -1,0 +1,244 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>demo_kinase_ppi</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2023-05-20"><meta name="DC.source" content="demo_kinase_ppi.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Load the sample dataset (Kinase PPI Network)</a></li><li><a href="#2">Initial preparation</a></li><li><a href="#3">Add labels and draw the network</a></li><li><a href="#4">Apply quantitative coloring based on Z-Scores</a></li><li><a href="#5">Adjust the node sizes based on number of targets</a></li><li><a href="#6">Further tweaking and legend</a></li></ul></div><h2 id="1">Load the sample dataset (Kinase PPI Network)</h2><p>This sample dataset loads two variables: NodeList, a table with 3 fields (Kinases):</p><div><ul><li>Name: Identifier for the node</li><li>ZScore: A quantitative score</li><li>NumTargets: Number of targets used in quantitative score calculation</li></ul></div><p>EdgeList, a table with 2 fields (PPI interactions):</p><div><ul><li>Node1: Name of first endpoint u of an edge (u, v)</li><li>Node2: Name of second endpoint v of an edge (u, v)</li></ul></div><p>The goal will be to create a network figure between kinases, node colors reflecting the Z-scores and sizes reflecting NumTargets.</p><pre class="codeinput">load(<span class="string">'data/sample_network_kinase_ppi.mat'</span>);
+
+disp(NodeList(1:5, :)) <span class="comment">% Display the first 5 rows</span>
+disp(EdgeList(1:5, :)) <span class="comment">% Display the first 5 rows</span>
+</pre><pre class="codeoutput">      Name        ZScore     NumTargets
+    _________    ________    __________
+
+    {'SGK1' }    -0.53248         1    
+    {'CDC7' }    -0.16278         6    
+    {'EEF2K'}    -0.41983         1    
+    {'Chk1' }      1.2041        12    
+    {'P38D' }      3.6201         4    
+
+      Node1       Node2  
+    _________    ________
+
+    {'CDC7' }    {'Chk1'}
+    {'EEF2K'}    {'P38D'}
+    {'SGK1' }    {'PDK1'}
+    {'CDC7' }    {'Chk2'}
+    {'Chk1' }    {'Chk2'}
+
+</pre><h2 id="2">Initial preparation</h2><pre class="codeinput">rng(1, <span class="string">'twister'</span>); <span class="comment">% For reproducibility</span>
+
+<span class="comment">% Map the edges and generate the network as a sparse matrix</span>
+[~, i1] = ismember(EdgeList.Node1, NodeList.Name);
+[~, i2] = ismember(EdgeList.Node2, NodeList.Name);
+nNode = height(NodeList);
+W = sparse(i1, i2, true, nNode, nNode);
+W = W | W'; <span class="comment">% Make the matrix symmetric</span>
+
+<span class="comment">% Initialize the networkvisualizer for the current network</span>
+net = networkvisualizer(W);
+</pre><h2 id="3">Add labels and draw the network</h2><pre class="codeinput"><span class="comment">% Add labels to nodes</span>
+net.setNodeLabels(NodeList.Name);
+net.setNodeSizes(<span class="string">'auto'</span>);
+
+<span class="comment">% Prepare the figure and plot</span>
+figure(1);
+clf();
+set(gcf, <span class="string">'Position'</span>, [0 0 1200 640]);
+set(gcf, <span class="string">'Color'</span>, [1 1 1]);
+plot(net);
+movegui(<span class="string">'center'</span>);
+</pre><img vspace="5" hspace="5" src="demo_kinase_ppi_01.png" alt=""> <h2 id="4">Apply quantitative coloring based on Z-Scores</h2><pre class="codeinput"><span class="comment">% Apply quantitative coloring</span>
+sigmoid_scale = 2;
+applySigmoid = @(x, k) 2 ./ (1 + exp(-x/k)) - 1;
+applyColoring = @(q) color_spacing_continuous(q, [-1 0 1], [0 0 1; 0.96 0.96 0.96; 1 0 0]);
+colors = applyColoring(applySigmoid(NodeList.ZScore, sigmoid_scale));
+net.setNodeColors(colors);
+
+<span class="comment">% Plot the figure again</span>
+figure(1); plot(net);
+</pre><img vspace="5" hspace="5" src="demo_kinase_ppi_02.png" alt=""> <h2 id="5">Adjust the node sizes based on number of targets</h2><pre class="codeinput"><span class="comment">% Set the node sizes and reapply layout</span>
+sizeScaling = 1.5 + log2(NodeList.NumTargets + 0.5);
+net.scaleNodeSizes(sizeScaling, 0.8);
+net.dolayout();
+
+<span class="comment">% Scale the labels based on node size</span>
+net.setNodeFontSize(2 + 2 * sizeScaling);
+
+<span class="comment">% Enlarge the node sizes by 40% and make sure they contain the labels</span>
+net.setNodeSizes(net.NodeSizes*1.4);
+net.setNodeSizes(<span class="string">'auto'</span>);
+
+<span class="comment">% Plot the figure again</span>
+figure(1); plot(net);
+</pre><img vspace="5" hspace="5" src="demo_kinase_ppi_03.png" alt=""> <h2 id="6">Further tweaking and legend</h2><pre class="codeinput"><span class="comment">% Set the edge line width to be less visible/obstructive</span>
+net.setEdgeLineWidth(0.75);
+
+<span class="comment">% Plot the figure again</span>
+figure(1);  plot(net);
+
+<span class="comment">% Add a legend to the figure from -6 to 6</span>
+zmin = -6; zmax = 6;
+color_scale = applySigmoid(linspace(zmin, zmax, 200)', sigmoid_scale);
+colormap(applyColoring(color_scale));
+clim([zmin, zmax]);
+c = colorbar(<span class="string">'Location'</span>, <span class="string">'southoutside'</span>);
+c.Label.String = <span class="string">'Z-score'</span>;
+c.Label.FontSize = 16;
+</pre><img vspace="5" hspace="5" src="demo_kinase_ppi_04.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Load the sample dataset (Kinase PPI Network)
+% This sample dataset loads two variables:
+% NodeList, a table with 3 fields (Kinases):
+%
+% * Name: Identifier for the node 
+% * ZScore: A quantitative score
+% * NumTargets: Number of targets used in quantitative score calculation
+%
+% EdgeList, a table with 2 fields (PPI interactions):
+%
+% * Node1: Name of first endpoint u of an edge (u, v)
+% * Node2: Name of second endpoint v of an edge (u, v)
+% 
+% The goal will be to create a network figure between kinases, 
+% node colors reflecting the Z-scores and sizes reflecting NumTargets. 
+load('data/sample_network_kinase_ppi.mat');
+
+disp(NodeList(1:5, :)) % Display the first 5 rows
+disp(EdgeList(1:5, :)) % Display the first 5 rows
+%% Initial preparation
+rng(1, 'twister'); % For reproducibility
+
+% Map the edges and generate the network as a sparse matrix
+[~, i1] = ismember(EdgeList.Node1, NodeList.Name);
+[~, i2] = ismember(EdgeList.Node2, NodeList.Name);
+nNode = height(NodeList);
+W = sparse(i1, i2, true, nNode, nNode);
+W = W | W'; % Make the matrix symmetric
+
+% Initialize the networkvisualizer for the current network
+net = networkvisualizer(W);
+
+%% Add labels and draw the network
+
+% Add labels to nodes
+net.setNodeLabels(NodeList.Name);
+net.setNodeSizes('auto');
+
+% Prepare the figure and plot
+figure(1); 
+clf();
+set(gcf, 'Position', [0 0 1200 640]);
+set(gcf, 'Color', [1 1 1]);
+plot(net);
+movegui('center');
+
+%% Apply quantitative coloring based on Z-Scores
+
+% Apply quantitative coloring
+sigmoid_scale = 2;
+applySigmoid = @(x, k) 2 ./ (1 + exp(-x/k)) - 1;
+applyColoring = @(q) color_spacing_continuous(q, [-1 0 1], [0 0 1; 0.96 0.96 0.96; 1 0 0]);
+colors = applyColoring(applySigmoid(NodeList.ZScore, sigmoid_scale));
+net.setNodeColors(colors);
+
+% Plot the figure again
+figure(1); plot(net);
+%% Adjust the node sizes based on number of targets
+
+% Set the node sizes and reapply layout
+sizeScaling = 1.5 + log2(NodeList.NumTargets + 0.5);
+net.scaleNodeSizes(sizeScaling, 0.8);
+net.dolayout();
+
+% Scale the labels based on node size
+net.setNodeFontSize(2 + 2 * sizeScaling);
+
+% Enlarge the node sizes by 40% and make sure they contain the labels
+net.setNodeSizes(net.NodeSizes*1.4);
+net.setNodeSizes('auto');
+
+% Plot the figure again
+figure(1); plot(net);
+%% Further tweaking and legend
+
+% Set the edge line width to be less visible/obstructive
+net.setEdgeLineWidth(0.75);
+
+% Plot the figure again
+figure(1);  plot(net);
+
+% Add a legend to the figure from -6 to 6
+zmin = -6; zmax = 6;
+color_scale = applySigmoid(linspace(zmin, zmax, 200)', sigmoid_scale);
+colormap(applyColoring(color_scale));
+clim([zmin, zmax]);
+c = colorbar('Location', 'southoutside');
+c.Label.String = 'Z-score';
+c.Label.FontSize = 16;
+
+##### SOURCE END #####
+--></body></html>

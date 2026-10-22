@@ -1,0 +1,3 @@
+[submodule "plugins/Automated-Analysis-of-EEG"]
+	path = Automated-Analysis-of-EEG
+	url = https://github.com/jasonnan2/Automated-Analysis-of-EEG

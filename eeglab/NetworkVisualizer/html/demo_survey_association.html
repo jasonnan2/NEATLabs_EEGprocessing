@@ -1,0 +1,266 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>demo_survey_association</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2023-05-20"><meta name="DC.source" content="demo_survey_association.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Load the sample dataset (Questionnaire Association Network)</a></li><li><a href="#2">Initial preparations</a></li><li><a href="#3">Customize the colors based on categories and add labels</a></li><li><a href="#4">Marking the cross category items</a></li><li><a href="#5">Setting the edge color and line widths based on weights</a></li></ul></div><h2 id="1">Load the sample dataset (Questionnaire Association Network)</h2><p>In this example, we are given a set of questionnaire items and the associations (correlation coefficients) between them. Each item also belongs to a particular category. Some items are marked marked with a secondary cross category as well. Overall, this dataset contains two variables.</p><p>NodeList, a table with 3 fields (Kinases):</p><div><ul><li>Name: Label of the item</li><li>Category: Category of the item</li><li>IsCrossCategory: true/false indicates if item has additional category</li><li>CrossCategory: Additional category if IsCrossCategory = true</li></ul></div><p>EdgeList, a table with 2 fields (PPI interactions):</p><div><ul><li>Node1: Name of first item u of an edge (u, v)</li><li>Node2: Name of second item v of an edge (u, v)</li><li>Corr: Correlation coefficient between u and v</li></ul></div><p>Our goal will be to create a network figure between the items Node colors indicating the item categories, and the node borders reflecting the secondary categories (if applicable). Whereas, the color and line widths of the edges will reflect the strength of the association between any two items.</p><pre class="codeinput">load(<span class="string">'data/sample_network_survey_association.mat'</span>);
+
+disp(NodeList(1:5, :)) <span class="comment">% Display the first 5 rows</span>
+disp(EdgeList(1:5, :)) <span class="comment">% Display the first 5 rows</span>
+</pre><pre class="codeoutput">     Name      Category    IsCrossCategory    CrossCategory
+    _______    ________    _______________    _____________
+
+    {'PA6'}     {'PA'}          true             {'PV'}    
+    {'PV2'}     {'PV'}          false            {'PV'}    
+    {'PV3'}     {'PV'}          false            {'PV'}    
+    {'PV4'}     {'PV'}          false            {'PV'}    
+    {'PV5'}     {'PV'}          false            {'PV'}    
+
+     Node1      Node2      Corr  
+    _______    _______    _______
+
+    {'PA6'}    {'PA6'}          1
+    {'PV2'}    {'PA6'}    0.35987
+    {'PV3'}    {'PA6'}    0.37956
+    {'PV4'}    {'PA6'}    0.34733
+    {'PV5'}    {'PA6'}    0.17661
+
+</pre><h2 id="2">Initial preparations</h2><pre class="codeinput">rng(1, <span class="string">'twister'</span>); <span class="comment">% For reproducibility</span>
+
+<span class="comment">% Filter for edges with corr &gt;= 0.2</span>
+EdgeList = EdgeList(EdgeList.Corr &gt;= 0.2, :);
+
+<span class="comment">% Map the edges and generate the network as a sparse matrix</span>
+nNode = height(NodeList);
+[~, i1] = ismember(EdgeList.Node1, NodeList.Name);
+[~, i2] = ismember(EdgeList.Node2, NodeList.Name);
+W = sparse(i1, i2, EdgeList.Corr, nNode, nNode);
+W = (W + W')*0.5; <span class="comment">% Make sure the matrix is symmetric</span>
+
+<span class="comment">% Initialize the networkvisualizer</span>
+net = networkvisualizer(W);
+</pre><h2 id="3">Customize the colors based on categories and add labels</h2><pre class="codeinput"><span class="comment">% Add node categories and color accordingly</span>
+categories = unique(NodeList.Category);
+categoryColors = [0 0.447 0.741; 0.85 0.325 0.098; <span class="keyword">...</span>
+    0.929 0.694 0.125; 0.466 0.674 0.188];
+net.addNodeClass(NodeList.Category, <span class="string">'Category'</span>);
+net.setNodeColors(categoryColors, categories, <span class="string">'Category'</span>);
+
+<span class="comment">% Add labels and make sure the node sizes accomodate it</span>
+net.setNodeLabels(nodeLabels);
+net.setNodeSizes(<span class="string">'auto'</span>);
+net.setNodeFontSize(14);
+
+<span class="comment">% Prepare the figure and plot the initial version</span>
+figure(1);
+clf();
+set(gcf, <span class="string">'Position'</span>, [0 0 800 640]);
+set(gcf, <span class="string">'Color'</span>, [1 1 1]);
+plot(net);
+</pre><img vspace="5" hspace="5" src="demo_survey_association_01.png" alt=""> <h2 id="4">Marking the cross category items</h2><pre class="codeinput"><span class="comment">% Add the CrossCategory and IsCrossCategory as additional classes</span>
+net.addNodeClass(NodeList.IsCrossCategory, <span class="string">'IsCrossCategory'</span>);
+net.addNodeClass(NodeList.CrossCategory, <span class="string">'CrossCategory'</span>);
+
+<span class="comment">% Set the line colors of node borders based on their cross category</span>
+net.setNodeLineColor(categoryColors, categories, <span class="string">'CrossCategory'</span>);
+
+<span class="comment">% Set the line colors to black if the node does not have a cross category</span>
+net.setNodeLineColor([0 0 0], false, <span class="string">'IsCrossCategory'</span>);
+
+<span class="comment">% Set the border line width depending on if the node has cross category</span>
+net.setNodeLineWidth([1.5; 3.5], [false; true], <span class="string">'IsCrossCategory'</span>);
+
+<span class="comment">% Also, make the node more rectangular if it is cross category</span>
+net.setNodeCurvature(0.5, true, <span class="string">'IsCrossCategory'</span>);
+
+<span class="comment">% Plot the figure again</span>
+figure(1); plot(net);
+</pre><img vspace="5" hspace="5" src="demo_survey_association_02.png" alt=""> <h2 id="5">Setting the edge color and line widths based on weights</h2><pre class="codeinput"><span class="comment">% Set edge categories based on weights</span>
+<span class="comment">% 1 for [0.2-0.3], 2 for [0.3-0.4], 3 for [&gt;0.4]</span>
+weights = W(net.Edges);
+weight_category = (weights &gt;= 0.2) + (weights &gt;= 0.3) + (weights &gt;= 0.4);
+net.addEdgeClass(weight_category, <span class="string">'weight_category'</span>);
+
+<span class="comment">% Set the edge line width based on the weight categories</span>
+net.setEdgeLineWidth(0.75^2*[1; 2; 3], [1; 2; 3], <span class="string">'weight_category'</span>);
+
+<span class="comment">% Set edge colors based on the category</span>
+edge_cat_colors = [0.65 0.65 0.65; 0.5 0.5 0.5; 0.35 0.35 0.35];
+net.setEdgeColors(edge_cat_colors, [1; 2; 3], <span class="string">'weight_category'</span>);
+
+<span class="comment">% Plot the figure again</span>
+figure(1); plot(net);
+</pre><img vspace="5" hspace="5" src="demo_survey_association_03.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Load the sample dataset (Questionnaire Association Network)
+% In this example, we are given a set of questionnaire items and the
+% associations (correlation coefficients) between them. 
+% Each item also belongs to a particular category. Some items are marked
+% marked with a secondary cross category as well. 
+% Overall, this dataset contains two variables. 
+% 
+% NodeList, a table with 3 fields (Kinases):
+% 
+% * Name: Label of the item 
+% * Category: Category of the item
+% * IsCrossCategory: true/false indicates if item has additional category
+% * CrossCategory: Additional category if IsCrossCategory = true
+%
+% EdgeList, a table with 2 fields (PPI interactions):
+% 
+% * Node1: Name of first item u of an edge (u, v)
+% * Node2: Name of second item v of an edge (u, v)
+% * Corr: Correlation coefficient between u and v
+%
+% Our goal will be to create a network figure between the items
+% Node colors indicating the item categories, and the node borders
+% reflecting the secondary categories (if applicable). 
+% Whereas, the color and line widths of the edges will reflect the 
+% strength of the association between any two items. 
+load('data/sample_network_survey_association.mat');
+
+disp(NodeList(1:5, :)) % Display the first 5 rows
+disp(EdgeList(1:5, :)) % Display the first 5 rows
+
+%% Initial preparations
+rng(1, 'twister'); % For reproducibility
+
+% Filter for edges with corr >= 0.2
+EdgeList = EdgeList(EdgeList.Corr >= 0.2, :);
+
+% Map the edges and generate the network as a sparse matrix
+nNode = height(NodeList);
+[~, i1] = ismember(EdgeList.Node1, NodeList.Name);
+[~, i2] = ismember(EdgeList.Node2, NodeList.Name);
+W = sparse(i1, i2, EdgeList.Corr, nNode, nNode);
+W = (W + W')*0.5; % Make sure the matrix is symmetric
+
+% Initialize the networkvisualizer
+net = networkvisualizer(W);
+
+%% Customize the colors based on categories and add labels
+
+% Add node categories and color accordingly
+categories = unique(NodeList.Category);
+categoryColors = [0 0.447 0.741; 0.85 0.325 0.098; ...
+    0.929 0.694 0.125; 0.466 0.674 0.188];
+net.addNodeClass(NodeList.Category, 'Category');
+net.setNodeColors(categoryColors, categories, 'Category');
+
+% Add labels and make sure the node sizes accomodate it
+net.setNodeLabels(nodeLabels);
+net.setNodeSizes('auto');
+net.setNodeFontSize(14);
+
+% Prepare the figure and plot the initial version
+figure(1);
+clf();
+set(gcf, 'Position', [0 0 800 640]);
+set(gcf, 'Color', [1 1 1]);
+plot(net);
+%% Marking the cross category items
+
+% Add the CrossCategory and IsCrossCategory as additional classes
+net.addNodeClass(NodeList.IsCrossCategory, 'IsCrossCategory');
+net.addNodeClass(NodeList.CrossCategory, 'CrossCategory');
+
+% Set the line colors of node borders based on their cross category
+net.setNodeLineColor(categoryColors, categories, 'CrossCategory');
+
+% Set the line colors to black if the node does not have a cross category
+net.setNodeLineColor([0 0 0], false, 'IsCrossCategory');
+
+% Set the border line width depending on if the node has cross category
+net.setNodeLineWidth([1.5; 3.5], [false; true], 'IsCrossCategory');
+
+% Also, make the node more rectangular if it is cross category
+net.setNodeCurvature(0.5, true, 'IsCrossCategory');
+
+% Plot the figure again
+figure(1); plot(net);
+
+%% Setting the edge color and line widths based on weights
+
+% Set edge categories based on weights
+% 1 for [0.2-0.3], 2 for [0.3-0.4], 3 for [>0.4]
+weights = W(net.Edges);
+weight_category = (weights >= 0.2) + (weights >= 0.3) + (weights >= 0.4);
+net.addEdgeClass(weight_category, 'weight_category');
+
+% Set the edge line width based on the weight categories
+net.setEdgeLineWidth(0.75^2*[1; 2; 3], [1; 2; 3], 'weight_category');
+
+% Set edge colors based on the category
+edge_cat_colors = [0.65 0.65 0.65; 0.5 0.5 0.5; 0.35 0.35 0.35];
+net.setEdgeColors(edge_cat_colors, [1; 2; 3], 'weight_category');
+
+% Plot the figure again
+figure(1); plot(net);
+
+
+##### SOURCE END #####
+--></body></html>

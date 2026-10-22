@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finding the brain signal: averaging, filtering and electrode positions</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f4;--card:#fbfcfd;--ink:#14202b;--mute:#566673;--grid:#d9e0e6;--teal:#0a7f8c;--amber:#b86e00;--red:#c2410c;--grey:#8795a1;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1820;--card:#15232d;--ink:#e3ebf0;--mute:#93a4b1;--grid:#243542;--teal:#4cc9d6;--amber:#eaa93c;--red:#f08a5d;--grey:#6f8190}}
+:root[data-theme="dark"]{--bg:#0e1820;--card:#15232d;--ink:#e3ebf0;--mute:#93a4b1;--grid:#243542;--teal:#4cc9d6;--amber:#eaa93c;--red:#f08a5d;--grey:#6f8190}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 Newsreader,Georgia,serif}
+main{max-width:740px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:2.5rem;line-height:1.1;margin:.2em 0 .3em;font-weight:600;letter-spacing:-.01em}
+h2{font-size:1.65rem;margin:2.2em 0 .4em;font-weight:600;line-height:1.2}
+p{margin:.8em 0;max-width:66ch}
+.lede{font-size:1.25rem;color:var(--mute)}
+code,.k{font-family:'DM Sans',sans-serif;font-size:.85em;background:var(--grid);padding:1px 6px;border-radius:4px}
+.fig{background:var(--card);border:1px solid var(--grid);border-radius:10px;padding:14px 16px;margin:1.2em 0;font-family:'DM Sans',system-ui,sans-serif;font-size:14px}
+canvas{display:block;width:100%;height:240px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;margin-top:10px}
+.ctl label{display:flex;align-items:center;gap:8px;color:var(--mute)}
+.ctl b{color:var(--ink);min-width:3ch;font-weight:500}
+input[type=range]{accent-color:var(--teal);width:150px}
+button{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--grey);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{border-color:var(--teal)}
+button.on{background:var(--teal);color:var(--bg);border-color:var(--teal)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.read{margin-top:8px;color:var(--mute);min-height:1.4em}
+.leg{display:flex;gap:16px;flex-wrap:wrap;color:var(--mute);margin-bottom:6px}
+.leg i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.two{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:18px;align-items:start}
+@media(max-width:640px){.two{grid-template-columns:1fr}h1{font-size:2rem}body{font-size:18px}}
+.bar{display:grid;grid-template-columns:64px 1fr 34px;gap:8px;align-items:center;margin:6px 0;color:var(--mute)}
+.bar div{height:8px;border-radius:4px;background:var(--grid)}.bar div i{display:block;height:100%;border-radius:4px}
+table{border-collapse:collapse;font:14px 'DM Sans',sans-serif;margin:1em 0;width:100%;max-width:560px}
+td,th{text-align:left;padding:5px 10px;border-bottom:1px solid var(--grid)}
+ul{padding-left:1.2em;max-width:66ch}li{margin:.3em 0}
+</style></head>
+<body><main>
+<h1>Finding the brain signal in a noisy recording</h1>
+<p class="lede">A scalp EEG electrode records a few microvolts of brain activity buried under blinks, muscle tension, mains hum and slow drift. This tutorial covers three tools for dealing with that, each with something you can drag around.</p>
+
+<h2>1. Averaging trials</h2>
+<p>When you present the same stimulus many times, the brain’s response is roughly the same each time, <em>time-locked</em> to the stimulus. The noise is not: it is different on every trial. Cut the recording into epochs around each stimulus and average them. The response adds up coherently, while noise that is random and zero-mean partly cancels.</p>
+<p>If single-trial noise has standard deviation σ and the trials are independent, the noise left after averaging N trials is about σ/√N. Four times the trials only halves the noise, so gains slow down quickly.</p>
+<div class="fig">
+<div class="leg"><span><i style="background:var(--grey)"></i>recent single trials</span><span><i style="background:var(--teal)"></i>average of N</span><span><i style="background:var(--amber)"></i>true response</span></div>
+<canvas id="c1"></canvas>
+<div class="ctl">
+<label>Trials N <input type="range" id="n1" min="1" max="256" value="1"><b id="n1v"></b></label>
+<label>Noise σ (µV) <input type="range" id="s1" min="2" max="40" value="15"><b id="s1v"></b></label>
+<span><button data-n="1">1</button> <button data-n="4">4</button> <button data-n="16">16</button> <button data-n="64">64</button> <button data-n="256">256</button></span>
+</div>
+<div class="read" id="r1"></div>
+</div>
+<p>The true response here is a small negative dip near 110 ms followed by a larger positive peak near 350 ms, similar in shape to the N1 and P3 components of an event-related potential (ERP). Try raising the noise: the more trials you need, the noisier the single trial is.</p>
+<p>Averaging only works if the assumptions hold. If the response latency jitters from trial to trial, the average is smeared and smaller. If an artifact (a blink, say) happens on many trials at the same moment, it will not average away, so bad epochs are usually rejected or corrected before averaging.</p>
+
+<h2>2. Frequency filtering</h2>
+<p>Any trace can be described as a sum of oscillations at different frequencies. Different sources of signal and noise live in different frequency ranges, so a filter that keeps some frequencies and removes others can clean the data without needing repeated trials.</p>
+<table><tr><th>Band</th><th>Approx. range</th></tr><tr><td>Delta</td><td>1–4 Hz</td></tr><tr><td>Theta</td><td>4–8 Hz</td></tr><tr><td>Alpha</td><td>8–13 Hz</td></tr><tr><td>Beta</td><td>13–30 Hz</td></tr><tr><td>Gamma</td><td>above 30 Hz</td></tr></table>
+<p>The simulated recording below has four seconds of slow drift (under 0.5 Hz, from sweat and electrode movement), a 10 Hz alpha rhythm, a weak 21 Hz beta rhythm, 60 Hz mains interference (50 Hz in much of the world) and broadband noise. The lower plot is the amplitude spectrum, which shows how much of each frequency is present.</p>
+<div class="fig">
+<div class="leg"><span><i style="background:var(--grey)"></i>raw</span><span><i style="background:var(--teal)"></i>filtered</span><span><i style="background:var(--amber)"></i>cutoffs</span></div>
+<canvas id="c2"></canvas>
+<canvas id="c3" style="height:200px;margin-top:6px"></canvas>
+<div class="ctl">
+<label>High-pass <input type="range" id="hp" min="0" max="20" step="0.1" value="0"><b id="hpv"></b></label>
+<label>Low-pass <input type="range" id="lp" min="5" max="120" step="1" value="120"><b id="lpv"></b></label>
+<label><input type="checkbox" id="nt"> 60 Hz notch</label>
+</div>
+<div class="ctl"><button id="p0">No filter</button><button id="p1">ERP: 0.1–30 Hz</button><button id="p2">Alpha only: 8–13 Hz</button></div>
+<div class="read" id="r2"></div>
+</div>
+<ul>
+<li><b>High-pass</b> removes frequencies below the cutoff. It kills drift but, set too high, distorts slow ERP components.</li>
+<li><b>Low-pass</b> removes frequencies above the cutoff. It tames muscle and hiss but, set too low, blunts fast peaks.</li>
+<li><b>Notch</b> removes a narrow band, typically mains hum. Use it sparingly, since it also removes real activity at that frequency.</li>
+<li><b>Band-pass</b> is a high-pass and low-pass together, as in the alpha preset.</li>
+</ul>
+<p>Two practical notes. First, a filter applied once forwards in time shifts the waveform; running it forwards and backwards (zero-phase, as done here) avoids that delay, though it can smear activity slightly earlier in time. Second, filter the continuous recording before cutting it into epochs, because short epochs have edge effects that distort the slow end of the spectrum.</p>
+<p>Filtering and averaging complement each other: filters remove noise at frequencies outside your signal, while averaging also reduces noise that overlaps the signal’s frequencies.</p>
+
+<h2>3. Electrode positions</h2>
+<p>Electrodes sit on a standard layout called the 10–20 system, named for placing them at 10% or 20% of the distance between landmarks such as the nasion and inion. Names tell you where: the letter gives the region (Fp frontal pole, F frontal, C central, T temporal, P parietal, O occipital), odd numbers are on the left, even on the right and z is the midline.</p>
+<p>Position matters because each electrode mostly sees the cortex under it, and each kind of noise has its own favourite place. Select a signal type to see how strongly each site picks it up, then click an electrode to see what its recording would look like.</p>
+<div class="fig"><div class="two">
+<div><canvas id="c4" style="height:340px;cursor:pointer"></canvas>
+<div class="ctl" style="justify-content:center"><button class="on" data-c="alpha">Alpha rhythm</button><button data-c="blink">Blinks</button><button data-c="emg">Muscle</button></div></div>
+<div><div id="elname" style="font-weight:700;margin-bottom:6px"></div><canvas id="c5" style="height:170px"></canvas>
+<div id="bars" style="margin-top:8px"></div></div>
+</div></div>
+<ul>
+<li><b>Occipital (O1, O2):</b> the visual cortex produces strong alpha when your eyes are closed, so these sites are the place to look for it.</li>
+<li><b>Frontal (Fp1, Fp2):</b> closest to the eyes, so blinks and eye movements show up here largest. Their electrical effect fades toward the back of the head.</li>
+<li><b>Temporal (T7, T8):</b> near the jaw and temple muscles, so tension and chewing add fast, irregular noise.</li>
+<li><b>Central and parietal (Cz, Pz):</b> where many cognitive ERPs, including the P3, are largest, along with sensorimotor activity at C3 and C4.</li>
+</ul>
+<p>Two more things to keep in mind. Every EEG channel is a voltage difference relative to a reference electrode (often the mastoids or the average of all channels), so a noisy reference leaks into every channel. And because the skull blurs the electric field (volume conduction), neighbouring electrodes are highly correlated; a signal at Cz does not necessarily come from directly beneath Cz.</p>
+
+<h2>Putting it together</h2>
+<ul>
+<li>Choose electrodes near the generators of the activity you care about, and record eye and muscle channels to know what to discard.</li>
+<li>Filter the continuous data with the mildest settings your question allows, then epoch it.</li>
+<li>Reject or correct contaminated trials, then average the rest. Plan for enough trials: noise falls only as 1/√N.</li>
+</ul>
+</main>
+<script>
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $=id=>document.getElementById(id);
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const gn=r=>{const u=1-r(),v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const G=(t,m,s)=>Math.exp(-.5*((t-m)/s)**2);
+function frame(c,xr,yr,tx,ty,fy){
+ const r=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*r;c.height=h*r;
+ const g=c.getContext('2d');g.setTransform(r,0,0,r,0,0);
+ const L=48,R=10,T=8,B=24;
+ const X=v=>L+(v-xr[0])/(xr[1]-xr[0])*(w-L-R),Y=v=>T+(yr[1]-v)/(yr[1]-yr[0])*(h-T-B);
+ g.font='11px DM Sans,sans-serif';g.fillStyle=css('--mute');g.lineWidth=1;
+ tx.forEach(t=>{g.strokeStyle=css('--grid');g.beginPath();g.moveTo(X(t),T);g.lineTo(X(t),h-B);g.stroke();g.textAlign='center';g.fillText(t,X(t),h-B+15)});
+ ty.forEach(t=>{g.strokeStyle=css('--grid');g.beginPath();g.moveTo(L,Y(t));g.lineTo(w-R,Y(t));g.stroke();g.textAlign='right';g.fillText(fy?fy(t):t,L-6,Y(t)+4)});
+ g.save();g.beginPath();g.rect(L,T,w-L-R,h-T-B);g.clip();
+ return{g,X,Y,w,h,L,R,T,B};
+}
+function path(f,xs,ys,col,lw,dash,al){const g=f.g;g.globalAlpha=al||1;g.beginPath();g.strokeStyle=col;g.lineWidth=lw;g.setLineDash(dash||[]);
+ xs.forEach((x,i)=>i?g.lineTo(f.X(x),f.Y(ys[i])):g.moveTo(f.X(x),f.Y(ys[i])));g.stroke();g.setLineDash([]);g.globalAlpha=1}
+
+/* ---- 1. averaging ---- */
+const T1=[];for(let t=-200;t<=800;t+=4)T1.push(t);
+const erp=t=>-4*G(t,110,22)+9*G(t,350,70);
+const R1=rng(7),NT=256,base=[];let ss=0,cn=0;
+for(let k=0;k<NT;k++){const ph=R1()*6.283;const row=T1.map(t=>gn(R1)*.9+.9*Math.sin(2*Math.PI*10*t/1000+ph));base.push(row);row.forEach(v=>{ss+=v*v;cn++})}
+const sd0=Math.sqrt(ss/cn);base.forEach(r=>r.forEach((v,i)=>r[i]=v/sd0));
+function draw1(){
+ const N=+$('n1').value,s=+$('s1').value;$('n1v').textContent=N;$('s1v').textContent=s;
+ const lim=Math.max(20,Math.ceil(3*s/10)*10);
+ const f=frame($('c1'),[-200,800],[-lim,lim],[-200,0,200,400,600,800],[-lim,0,lim],v=>v+' µV');
+ for(let k=Math.max(0,N-25);k<N;k++)path(f,T1,T1.map((t,i)=>erp(t)+s*base[k][i]),css('--grey'),1,0,.35);
+ const dev=T1.map((t,i)=>{let a=0;for(let k=0;k<N;k++)a+=base[k][i];return s*a/N});
+ path(f,T1,T1.map(erp),css('--amber'),2,[6,4]);
+ path(f,T1,T1.map((t,i)=>erp(t)+dev[i]),css('--teal'),2.5);
+ const res=Math.sqrt(dev.reduce((a,v)=>a+v*v,0)/dev.length);
+ $('r1').textContent=`Single-trial noise ≈ ${s} µV. Residual noise in the average of ${N}: ${res.toFixed(1)} µV (σ/√N predicts ${(s/Math.sqrt(N)).toFixed(1)} µV).`;
+}
+$('n1').oninput=$('s1').oninput=draw1;
+document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{$('n1').value=b.dataset.n;draw1()});
+
+/* ---- 2. filtering ---- */
+const FS=250,LEN=1000,R2=rng(3);
+const raw=Array.from({length:LEN},(_,i)=>{const t=i/FS;
+ return 35*Math.sin(2*Math.PI*.15*t+1)+18*Math.sin(2*Math.PI*.05*t)+8*Math.sin(2*Math.PI*10*t)*(.6+.4*Math.sin(2*Math.PI*.4*t))+3*Math.sin(2*Math.PI*21*t+2)+10*Math.sin(2*Math.PI*60*t)+4*gn(R2)});
+const lp1=fc=>x=>{const a=1-Math.exp(-2*Math.PI*fc/FS);let y=x[0];return x.map(v=>y+=a*(v-y))};
+const fb=(x,f)=>{const y=f(x);y.reverse();return f(y).reverse()};
+const zpLP=(x,fc)=>fb(fb(x,lp1(fc)),lp1(fc));
+function notch(x,f0,Q){const w=2*Math.PI*f0/FS,al=Math.sin(w)/(2*Q),c=Math.cos(w),a0=1+al,b0=1/a0,b1=-2*c/a0,a2=(1-al)/a0;
+ const run=x=>{let x1=x[0],x2=x[0],y1=x[0],y2=x[0];return x.map(v=>{const y=b0*v+b1*x1+b0*x2-b1*y1-a2*y2;x2=x1;x1=v;y2=y1;y1=y;return y})};
+ const y=run(x);y.reverse();return run(y).reverse()}
+function spec(x){const N=x.length;let sw=0;const w=x.map((_,i)=>{const h=.5-.5*Math.cos(2*Math.PI*i/(N-1));sw+=h;return h});
+ const out=[];for(let f=0;f<=80;f+=.5){let re=0,im=0;const k=2*Math.PI*f/FS;for(let i=0;i<N;i++){const v=x[i]*w[i];re+=v*Math.cos(k*i);im-=v*Math.sin(k*i)}out.push(Math.log10(Math.max(.1,2*Math.hypot(re,im)/sw)))}return out}
+const T2=raw.map((_,i)=>i/FS),F2=[];for(let f=0;f<=80;f+=.5)F2.push(f);
+const rawSpec=spec(raw);
+function draw2(){
+ const hp=+$('hp').value,lp=+$('lp').value,nt=$('nt').checked;
+ $('hpv').textContent=hp?hp+' Hz':'off';$('lpv').textContent=lp>=120?'off':lp+' Hz';
+ let y=raw;if(nt)y=notch(y,60,25);
+ if(hp>0){const l=zpLP(y,hp);y=y.map((v,i)=>v-l[i])}
+ if(lp<120)y=zpLP(y,lp);
+ let f=frame($('c2'),[0,4],[-80,80],[0,1,2,3,4],[-80,0,80],v=>v+' µV');
+ path(f,T2,raw,css('--grey'),1,0,.7);path(f,T2,y,css('--teal'),2);
+ f=frame($('c3'),[0,80],[-1,2.2],[0,10,20,30,40,50,60,70,80],[-1,0,1,2],v=>(10**v)+' µV');
+ path(f,F2,rawSpec,css('--grey'),1.5);path(f,F2,spec(y),css('--teal'),2);
+ f.g.strokeStyle=css('--amber');f.g.setLineDash([5,4]);f.g.lineWidth=1.5;
+ [hp>0?hp:null,lp<120?lp:null,nt?60:null].forEach(v=>{if(v!=null){f.g.beginPath();f.g.moveTo(f.X(v),f.T);f.g.lineTo(f.X(v),f.h-f.B);f.g.stroke()}});
+ let m=[];if(hp>=1)m.push('A high-pass at 1 Hz or more can distort slow ERP components.');
+ if(lp<20)m.push('A low-pass under about 20 Hz blurs fast peaks and removes beta.');
+ if(hp>=lp)m.push('High-pass is at or above the low-pass, so almost nothing passes.');
+ if(!m.length)m.push(hp||lp<120||nt?'Look for the drift, 60 Hz peak and high-frequency hiss disappearing from the spectrum.':'Raw data: note the 60 Hz spike and the huge low-frequency drift.');
+ $('r2').textContent=m.join(' ');
+}
+$('hp').oninput=$('lp').oninput=$('nt').onchange=draw2;
+const pre=(h,l,n)=>()=>{$('hp').value=h;$('lp').value=l;$('nt').checked=n;draw2()};
+$('p0').onclick=pre(0,120,false);$('p1').onclick=pre(.1,30,true);$('p2').onclick=pre(8,13,false);
+
+/* ---- 3. electrodes ---- */
+const EL=[['Fp1',-.3,.9],['Fp2',.3,.9],['F7',-.78,.58],['F3',-.4,.5],['Fz',0,.5],['F4',.4,.5],['F8',.78,.58],['T7',-.92,0],['C3',-.46,0],['Cz',0,0],['C4',.46,0],['T8',.92,0],['P7',-.78,-.58],['P3',-.4,-.5],['Pz',0,-.5],['P4',.4,-.5],['P8',.78,-.58],['O1',-.3,-.9],['O2',.3,-.9]].map(([n,x,y])=>({n,x,y}));
+const W={alpha:p=>Math.min(1,.06+Math.pow(Math.max(0,(-p.y-.2)/.7),2)),blink:p=>Math.pow(Math.max(0,(p.y-.2)/.7),2),emg:p=>Math.min(1,Math.pow(Math.max(0,(Math.abs(p.x)-.6)/.35),1.5))};
+const CC={alpha:'--teal',blink:'--red',emg:'--amber'},CN={alpha:'Alpha',blink:'Blinks',emg:'Muscle'};
+let sel=EL[17],comp='alpha';
+const R3=rng(11),N3=750,emgN=Array.from({length:N3},()=>gn(R3)),baseN=Array.from({length:N3},()=>gn(R3));
+const T3=Array.from({length:N3},(_,i)=>i/FS);
+function lay(c){const w=c.clientWidth,h=c.clientHeight,R=Math.min(w,h)*.5-14;return{w,h,cx:w/2,cy:h/2+6,R:R*.9,pos:e=>[w/2+e.x*R*.9,h/2+6-e.y*R*.9]}}
+function draw4(){
+ const c=$('c4'),r=devicePixelRatio||1,L=lay(c);c.width=L.w*r;c.height=L.h*r;
+ const g=c.getContext('2d');g.setTransform(r,0,0,r,0,0);
+ g.strokeStyle=css('--grey');g.lineWidth=1.5;g.fillStyle=css('--card');
+ const hr=L.R*1.12;
+ g.beginPath();g.arc(L.cx,L.cy,hr,0,7);g.stroke();
+ g.beginPath();g.moveTo(L.cx-16,L.cy-hr+3);g.lineTo(L.cx,L.cy-hr-14);g.lineTo(L.cx+16,L.cy-hr+3);g.stroke();
+ [-1,1].forEach(s=>{g.beginPath();g.ellipse(L.cx+s*(hr+5),L.cy,6,20,0,0,7);g.stroke()});
+ g.font='600 10px DM Sans,sans-serif';g.textAlign='center';
+ EL.forEach(e=>{const[x,y]=L.pos(e),w=W[comp](e);
+  g.beginPath();g.arc(x,y,16,0,7);g.fillStyle=css('--card');g.fill();
+  g.globalAlpha=.1+.9*w;g.fillStyle=css(CC[comp]);g.fill();g.globalAlpha=1;
+  g.lineWidth=e===sel?3:1;g.strokeStyle=e===sel?css('--ink'):css('--grey');g.stroke();
+  g.fillStyle=css('--ink');g.fillText(e.n,x,y+3.5)});
+}
+function draw5(){
+ const wa=W.alpha(sel),wb=W.blink(sel),wm=W.emg(sel);
+ $('elname').textContent=sel.n;
+ const y=T3.map((t,i)=>22*wa*Math.sin(2*Math.PI*10*t)*(.55+.45*Math.sin(2*Math.PI*.6*t))+110*wb*(G(t,.7,.08)+G(t,2.1,.08))+22*wm*emgN[i]+3*baseN[i]);
+ const f=frame($('c5'),[0,3],[-120,120],[0,1,2,3],[-100,0,100],v=>v+' µV');
+ path(f,T3,y,css('--ink'),1.3);
+ $('bars').innerHTML=[['alpha',wa],['blink',wb],['emg',wm]].map(([k,w])=>`<div class="bar"><span>${CN[k]}</span><div><i style="width:${Math.round(w*100)}%;background:var(${CC[k]})"></i></div><span>${Math.round(w*100)}%</span></div>`).join('');
+}
+$('c4').onclick=ev=>{const c=$('c4'),b=c.getBoundingClientRect(),L=lay(c),x=ev.clientX-b.left,y=ev.clientY-b.top;
+ let best=null,d=22;EL.forEach(e=>{const[ex,ey]=L.pos(e),k=Math.hypot(ex-x,ey-y);if(k<d){d=k;best=e}});
+ if(best){sel=best;draw4();draw5()}};
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{comp=b.dataset.c;document.querySelectorAll('[data-c]').forEach(o=>o.classList.toggle('on',o===b));draw4()});
+
+function all(){draw1();draw2();draw4();draw5()}
+all();addEventListener('resize',all);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);
+</script></body></html>
