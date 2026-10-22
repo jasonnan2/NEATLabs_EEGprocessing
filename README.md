@@ -4,8 +4,7 @@ A unified workspace for EEG data processing and analysis, integrating EEGLAB wit
 ---
 ## Step 1: Initial Data Processing 
 
-go from raw XDF files -> epoched data for all tasks
-[TODO]
+Follow this script **[brainEpreprocessing.m](https://github.com/jasonnan2/NEATLabs_EEGprocessing/blob/main/brainEpreprocessing.m)**
 
 ---
 ## Step 2: Organizing and Formatting Data
