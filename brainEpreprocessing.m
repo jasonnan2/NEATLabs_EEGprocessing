@@ -6,9 +6,9 @@ clear; clc; close all
 
 %% ===================== USER SETTINGS (edit here) =====================
 eeglabPath  = '/eeglab';                                   % folder containing eeglab.m
-rawData     = RAW_DATA_FOLDERPATH;
-resultsDir  = RESULTS_FOLDERPATH;
-filePattern = 'mycog.xdf';        % template for your .xdf files
+rawData     = uigetdir('./', 'Folder with Raw Data'); % select folder 
+resultsDir  = uigetdir('./', 'Where Do You Want to Save Processed Data');
+filePattern = '*.xdf';        % template for your .xdf files
 subjectIdx  = [];                 % [] = all subjects, or e.g. 1:3
 
 % PEB+ parameters

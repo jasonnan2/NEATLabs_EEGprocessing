@@ -33,8 +33,12 @@ for aligni = 1:length(indalign)
     ProcessVars(aligni).cutoffFreq = [1 45];
     
     %% load EEG
-    load(rawFile); 
-    %EEGmain = pop_loadxdf(rawFile);
+    try
+        load(rawFile); 
+    catch
+        EEGmain = pop_loadxdf(rawFile);
+    end
+    
     EEGmain.data = double(EEGmain.data);
     EEGmain = pop_resample( EEGmain, ProcessVars(aligni).srate);
     %low-pass filter
