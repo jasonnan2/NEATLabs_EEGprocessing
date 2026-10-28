@@ -1,6 +1,6 @@
 [submodule "Automated-Analysis-of-EEG"]
 	path = Automated-Analysis-of-EEG
-	url = https://github.com/jasonnan2/Automated-Analysis-of-EEG
+	url = https://github.com/jasonnan2/Automated-Analysis-of-EEG.git
 [submodule "eeglab/dsi"]
 	path = eeglab/dsi
 	url = https://github.com/aojeda/dsi
