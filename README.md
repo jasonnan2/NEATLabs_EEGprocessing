@@ -3,6 +3,13 @@
 A unified workspace for EEG data processing and analysis, integrating EEGLAB with automated analysis tools and custom pipelines for BrainE tasks. 
 **[BrainE Paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC8221518/)**, **[App](https://play.google.com/store/apps/details?id=com.neatlabs.braine&hl=en_US&pli=1)**, Processed Data From **[Inhibitory Control, Working Memory, Emotional Bias, and Interference Processing](https://www.nature.com/articles/s44277-024-00012-x)**, **[Iowa Gambling Task](https://www.nature.com/articles/s41598-025-94672-0)**
 
+--
+## Step 0: Organizing Data
+
+Have a single folder per EEG session with the EEG.xdf file, and all task Files from BrainE.
+
+[TODO: link image]
+
 ---
 ## Step 1: Initial Data Processing 
 
@@ -11,7 +18,7 @@ Follow this script **[brainEpreprocessing.m](https://github.com/jasonnan2/NEATLa
 ---
 ## Step 2: Organizing and Formatting Data
 
-Follow the Workflow in **[brainEanalysis](https://github.com/jasonnan2/NEATLabs_EEGprocessing/brainEanalysis)**
+Follow the Workflow in **[brainEanalysis](https://github.com/jasonnan2/NEATLabs_EEGprocessing/tree/main/brainEanalysis)**
 
 ---
 ## Step 3: Statistical Analysis
