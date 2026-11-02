@@ -1,7 +1,7 @@
 function [EEGset, ProcessVars] = preProcessing(rawFile, behFile)
 taskname = 'middlefish';
 %The alignments of interest for EEG
-indalign = [2];
+indalign = [2,3,4];
 ProcessVars = struct;
 EEGset = cell(length(indalign),1);
 for aligni = 1:length(indalign)

@@ -1,7 +1,7 @@
 function [EEGset, ProcessVars] = preProcessing(rawFile, behFile)
 taskname = 'gogreen';
 %The alignments of interest for EEG
-indalign = 2; %[2 4];
+indalign = [2,3,4]; %[2 4];
 ProcessVars = struct;
 EEGset = cell(length(indalign),1);
 for aligni = 1:length(indalign)

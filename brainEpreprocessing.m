@@ -8,11 +8,11 @@ clear; clc; close all
 eeglabPath  = '/eeglab';                                   % folder containing eeglab.m
 rawData     = uigetdir('./', 'Folder with Raw Data'); % select folder 
 resultsDir  = uigetdir('./', 'Where Do You Want to Save Processed Data');
-filePattern = '*.xdf';        % template for your .xdf files
+filePattern = '.xdf';        % template for your .xdf files
 subjectIdx  = [];                 % [] = all subjects, or e.g. 1:3
 
 % PEB+ parameters
-templatefile = "headModel_templateFile_newPEBplus.mat"; % if you have a template file, specify here
+templatefile = 'headModel_templateFile_newPEBplus.mat'; % if you have a template file, specify here
 %templatefile = headModel.getDefaultTemplateFilename(); %Otherwise use this
 conductivity         = [0.33, 0.022, 0.33];
 orientation          = false;
@@ -99,7 +99,7 @@ function runEpoching(rawFile, pathName, rawFileName, task, taskFolder)
 end
 
 function behFile = findBehFile(pathName, key)
-    candidates = pickList(pathName, {'.xlsx'}, {'.xlsx'}, {'lock'});
+    candidates = pickList(pathName, {'.xlsx'}, {'.xlsx'}, {'lock', 'metrics'});
     if isempty(candidates)
         candidates = pickList(pathName, 'trial_summary.csv');
     end

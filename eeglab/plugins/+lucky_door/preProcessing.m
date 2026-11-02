@@ -1,7 +1,7 @@
 function [EEGset, ProcessVars] = preProcessing(rawFile, behFile)
 taskname = 'lucky_door';
 %The alignments of interest for EEG
-indalign = [4]; %[5 4];
+indalign = [3,4,5]; %[5 4];
 ProcessVars = struct;
 EEGset = cell(length(indalign),1);
 for aligni = 1:length(indalign)
