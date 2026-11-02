@@ -1,7 +1,4 @@
 %% Neatlabs base EEG processing: epoching + PEB+ artifact cleaning
-% Cleaned-up version. Every change is marked with a tag like [CHG-3];
-% the numbers match the change list that came with this file.
-% Requires MATLAB R2016b or newer (local functions at the end of a script).
 clear; clc; close all
 
 %% ===================== USER SETTINGS (edit here) =====================
