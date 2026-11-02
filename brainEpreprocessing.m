@@ -5,7 +5,7 @@
 clear; clc; close all
 
 %% ===================== USER SETTINGS (edit here) =====================
-eeglabPath  = '/eeglab';                                   % folder containing eeglab.m
+eeglabPath  = './NEATLabs_EEGprocessing/eeglab';      % Use the eeglab folder included
 rawData     = uigetdir('./', 'Folder with Raw Data'); % select folder 
 resultsDir  = uigetdir('./', 'Where Do You Want to Save Processed Data');
 filePattern = '.xdf';        % template for your .xdf files
